@@ -16,7 +16,7 @@
     "performance"
   ],
   "author": "Michał Janaszek",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "chrome-har": "^0.2.3"
   }
