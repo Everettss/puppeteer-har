@@ -1,14 +1,14 @@
 {
   "name": "puppeteer-har",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Generate HAR file with Puppeteer",
   "main": "index.js",
   "directories": {
     "lib": "lib"
   },
   "repository": {
-    "type" : "git",
-    "url" : "https://github.com/Everettss/puppeteer-har"
+    "type": "git",
+    "url": "https://github.com/Everettss/puppeteer-har"
   },
   "keywords": [
     "har",
