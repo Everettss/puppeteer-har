@@ -1,0 +1,19 @@
+{
+  "name": "puppeteer-har",
+  "version": "1.0.0",
+  "description": "Generate HAR file with Puppeteer",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "keywords": [
+    "har",
+    "puppeteer",
+    "performance"
+  ],
+  "author": "Michał Janaszek",
+  "license": "ISC",
+  "dependencies": {
+    "chrome-har": "^0.2.3"
+  }
+}
