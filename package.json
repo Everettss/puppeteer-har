@@ -6,6 +6,10 @@
   "directories": {
     "lib": "lib"
   },
+  "repository": {
+    "type" : "git",
+    "url" : "https://github.com/Everettss/puppeteer-har"
+  },
   "keywords": [
     "har",
     "puppeteer",
