@@ -18,6 +18,6 @@
   "author": "Michał Janaszek",
   "license": "MIT",
   "dependencies": {
-    "chrome-har": "^0.2.3"
+    "chrome-har": "^0.3.2"
   }
 }
