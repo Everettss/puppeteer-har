@@ -6,6 +6,9 @@
   "directories": {
     "lib": "lib"
   },
+  "scripts": {
+    "test": "mocha"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/Everettss/puppeteer-har"
@@ -19,5 +22,9 @@
   "license": "MIT",
   "dependencies": {
     "chrome-har": "^0.2.3"
+  },
+  "devDependencies": {
+    "mocha": "^5.2.0",
+    "puppeteer": "^1.4.0"
   }
 }
