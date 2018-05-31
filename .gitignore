@@ -5,6 +5,7 @@
 
 # testing
 /coverage
+results.har.json
 
 # production
 /build
@@ -22,4 +23,3 @@ yarn-debug.log*
 yarn-error.log*
 
 .idea
-

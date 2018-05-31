@@ -1,5 +1,6 @@
 # puppeteer-har
-[![npm version][1]][2] 
+[![Build Status](https://travis-ci.org/Everettss/puppeteer-har.svg?branch=master)](https://travis-ci.org/Everettss/puppeteer-har)
+[![npm version][1]][2]
 
 Generate HAR file with [puppeteer](https://github.com/GoogleChrome/puppeteer).
 
