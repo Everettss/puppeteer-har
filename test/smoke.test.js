@@ -14,7 +14,7 @@ describe('Smoke test', async () => {
   });
 
   it('should generate HAR file', async () => {
-    const browser = await puppeteer.launch();
+    const browser = await puppeteer.launch({ args: ['--no-sandbox'] });
     const page = await browser.newPage();
 
     const har = new PuppeteerHar(page);
