@@ -18,6 +18,12 @@
   "author": "Michał Janaszek",
   "license": "MIT",
   "dependencies": {
-    "chrome-har": "^0.2.3"
+    "chrome-har": "^0.4.1"
+  },
+  "peerDependencies": {
+    "puppeteer": ">=1.0.0"
+  },
+  "engines": {
+    "node": ">=7.6.0"
   }
 }
