@@ -30,7 +30,7 @@ const PuppeteerHar = require('puppeteer-har');
 ```
 
 ### PuppeteerHar(page)
-- `options` <[Page]>
+- `page` <[Page]>
 
 ### har.start([options])
 - `options` <?[Object]> Optional
