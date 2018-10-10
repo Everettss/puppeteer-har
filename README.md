@@ -37,7 +37,7 @@ const PuppeteerHar = require('puppeteer-har');
   - `path` <[string]> If set HAR file will be written at this path
 - returns: <[Promise]>
 
-### har.stop([options])
+### har.stop()
 - returns: <[Promise]<?[Object]>> If path is not set in `har.start` Promise will return object with HAR.
 
 [1]: https://img.shields.io/npm/v/puppeteer-har.svg?style=flat-square
