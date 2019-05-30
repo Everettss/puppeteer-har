@@ -18,7 +18,7 @@
   "author": "Michał Janaszek",
   "license": "MIT",
   "dependencies": {
-    "chrome-har": "^0.4.1"
+    "chrome-har": ">=0.10.0"
   },
   "peerDependencies": {
     "puppeteer": ">=1.0.0"
