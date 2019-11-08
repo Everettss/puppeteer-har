@@ -20,7 +20,7 @@ const PuppeteerHar = require('puppeteer-har');
   const page = await browser.newPage();
 
   const har = new PuppeteerHar(page);
-  await har.start({ path: 'results.har' });
+  await har.start({ path: 'results.har', saveResponse: false });
 
   await page.goto('http://example.com');
 
