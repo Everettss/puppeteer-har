@@ -21,7 +21,7 @@
     "chrome-har": "^0.11.3"
   },
   "peerDependencies": {
-    "puppeteer": ">=1.0.0"
+    "puppeteer-core": ">=1.0.0"
   },
   "engines": {
     "node": ">=7.6.0"
