@@ -3,6 +3,7 @@
   "version": "1.1.2",
   "description": "Generate HAR file with Puppeteer",
   "main": "index.js",
+  "types": "index.d.ts",
   "directories": {
     "lib": "lib"
   },
