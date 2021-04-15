@@ -1,0 +1,9 @@
+{
+  "extends": ["config:js-lib"],
+  "packageRules": [
+    {
+      "matchDepTypes": ["devDependencies"],
+      "automerge": true
+    }
+  ]
+}
