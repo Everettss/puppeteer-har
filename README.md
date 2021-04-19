@@ -26,9 +26,13 @@ import { captureNetwork } from "puppeteer-har"
 })()
 ```
 
-## captureNetwork(page[, options])
+## `captureNetwork(page[, options])`
 
 Start capturing the network traffic of the given puppeteer page.
+
+### Returns
+
+`captureHar` returns a method that will stop capturing traffic and return a HAR file when called.
 
 ### `options`
 
@@ -41,7 +45,3 @@ If set the HAR file will also include the responses to network requests.
 
 Defaults to `['text/html', 'application/json']`.
 When responses should be saved you can specify which response types to include through this array.
-
-### Returns
-
-`captureHar` returns a method that will stop capturing traffic and return a HAR file when called.
