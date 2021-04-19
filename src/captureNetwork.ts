@@ -22,7 +22,7 @@ const network_observe = [
 ]
 
 type CaptureOptions = {
-  saveResponse?: boolean
+  saveResponses?: boolean
   captureMimeTypes?: string[]
 }
 
@@ -38,10 +38,10 @@ type NetworkEvent = {
 
 type StopFn = () => Promise<Har>
 
-export async function captureHar(
+export async function captureNetwork(
   page: Page,
   {
-    saveResponse = false,
+    saveResponses = false,
     captureMimeTypes = ["text/html", "application/json"],
   }: CaptureOptions = {}
 ): Promise<StopFn> {
@@ -73,7 +73,7 @@ export async function captureHar(
 
       network_events.push({ method, params })
 
-      if (!saveResponse || method !== "Network.responseReceived") {
+      if (!saveResponses || method !== "Network.responseReceived") {
         return
       }
 
@@ -107,13 +107,13 @@ export async function captureHar(
     })
   })
 
-  return async function stop(): Promise<Har> {
+  return async function getHar(): Promise<Har> {
     inProgress = false
 
     await client.detach()
 
     return harFromMessages(page_events.concat(network_events), {
-      includeTextFromResponseBody: saveResponse,
+      includeTextFromResponseBody: saveResponses,
     })
   }
 }

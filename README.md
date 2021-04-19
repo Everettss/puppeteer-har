@@ -1,48 +1,47 @@
 # puppeteer-har
-[![npm version][1]][2] 
 
 Generate HAR file with [puppeteer](https://github.com/GoogleChrome/puppeteer).
 
 ## Install
 
 ```
-npm install puppeteer-har
+yarn add @auteon/puppeteer-har
 ```
 
 ## Usage
 
-```javascript
-const puppeteer = require('puppeteer');
-const PuppeteerHar = require('puppeteer-har');
+```es6
+import puppeteer from "puppeteer"
+import { captureNetwork } from "puppeteer-har"
+;(async () => {
+  const browser = await puppeteer.launch()
+  const page = await browser.newPage()
 
-(async () => {
-  const browser = await puppeteer.launch();
-  const page = await browser.newPage();
+  const getHar = await captureNetwork(page)
 
-  const har = new PuppeteerHar(page);
-  await har.start({ path: 'results.har' });
+  await page.goto("http://example.com")
 
-  await page.goto('http://example.com');
-
-  await har.stop();
-  await browser.close();
-})();
+  const har = await getHar()
+  await browser.close()
+})()
 ```
 
-### PuppeteerHar(page)
-- `page` <[Page]>
+## captureNetwork(page[, options])
 
-### har.start([options])
-- `options` <?[Object]> Optional
-  - `path` <[string]> If set HAR file will be written at this path
-- returns: <[Promise]>
+Start capturing the network traffic of the given puppeteer page.
 
-### har.stop()
-- returns: <[Promise]<?[Object]>> If path is not set in `har.start` Promise will return object with HAR.
+### `options`
 
-[1]: https://img.shields.io/npm/v/puppeteer-har.svg?style=flat-square
-[2]: https://npmjs.org/package/puppeteer-har
-[Object]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object "Object"
-[Page]: https://github.com/GoogleChrome/puppeteer/blob/master/docs/api.md#class-page
-[Promise]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise "Promise"
-[string]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Data_structures#String_type "String"
+#### `saveResponses`
+
+Defaults to `false`.
+If set the HAR file will also include the responses to network requests.
+
+#### `captureMimeTypes`
+
+Defaults to `['text/html', 'application/json']`.
+When responses should be saved you can specify which response types to include through this array.
+
+### Returns
+
+`captureHar` returns a method that will stop capturing traffic and return a HAR file when called.

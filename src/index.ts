@@ -1,1 +1,1 @@
-export { captureHar } from "./captureHar"
+export { captureNetwork } from "./captureNetwork"
