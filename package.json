@@ -1,13 +1,16 @@
 {
   "name": "@auteon/puppeteer-har",
-  "version": "1.1.2",
+  "version": "0.0.0-development",
   "description": "Generate HAR file with Puppeteer",
   "main": "lib/index.js",
   "scripts": {
     "clean": "rimraf lib",
     "prebuild": "yarn clean",
     "build": "tsc --build",
-    "prepublishOnly": "yarn build"
+    "prepublishOnly": "yarn build && pinst --disable",
+    "postinstall": "husky install",
+    "postpublish": "pinst --enable",
+    "release": "semantic-release"
   },
   "repository": {
     "type": "git",
@@ -30,10 +33,35 @@
     "node": ">=7.6.0"
   },
   "devDependencies": {
+    "@commitlint/cli": "^12.1.1",
+    "@commitlint/config-conventional": "^12.1.1",
     "@types/har-format": "1.2.5",
     "@types/node": "14.14.39",
+    "husky": "^6.0.0",
+    "pinst": "^2.1.6",
     "puppeteer": "8.0.0",
     "rimraf": "3.0.2",
+    "semantic-release": "^17.4.2",
     "typescript": "4.2.4"
+  },
+  "release": {
+    "branch": "main",
+    "branches": [
+      "main"
+    ]
+  },
+  "husky": {
+    "hooks": {
+      "commit-msg": "commitlint -E  HUSKY_GIT_PARAMS"
+    }
+  },
+  "commitlint": {
+    "extends": [
+      "@commitlint/config-conventional"
+    ]
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com",
+    "access": "public"
   }
 }
