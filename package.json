@@ -4,7 +4,10 @@
   "description": "Generate HAR file with Puppeteer",
   "main": "lib/index.js",
   "scripts": {
-    "build": "tsc --build"
+    "clean": "rimraf lib",
+    "prebuild": "yarn clean",
+    "build": "tsc --build",
+    "prepublishOnly": "yarn build"
   },
   "repository": {
     "type": "git",
@@ -30,6 +33,7 @@
     "@types/har-format": "^1.2.5",
     "@types/node": "^14.14.39",
     "puppeteer": "^8.0.0",
+    "rimraf": "^3.0.2",
     "typescript": "^4.2.4"
   }
 }
