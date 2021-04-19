@@ -50,6 +50,8 @@ export async function captureNetwork(
   const page_events: PageEvent[] = []
   const network_events: NetworkEvent[] = []
 
+  const pendingRequests: Promise<void>[] = []
+
   const client = await page.target().createCDPSession()
 
   await client.send("Page.enable")
@@ -88,6 +90,10 @@ export async function captureNetwork(
         return
       }
 
+      const [pendingRequest, resolve] = createResolvable()
+
+      pendingRequests.push(pendingRequest)
+
       try {
         const responseBody = await client.send("Network.getResponseBody", {
           requestId,
@@ -103,6 +109,8 @@ export async function captureNetwork(
         // navigation and we are no longer able to retrieve them. In this
         // case, fail soft so we still add the rest of the response to the
         // HAR. Possible option would be force wait before navigation...
+      } finally {
+        resolve()
       }
     })
   })
@@ -111,9 +119,30 @@ export async function captureNetwork(
     inProgress = false
 
     await client.detach()
+    await Promise.all(pendingRequests)
 
     return harFromMessages(page_events.concat(network_events), {
       includeTextFromResponseBody: saveResponses,
     })
   }
+}
+
+type ResolverFn = () => void
+
+const createResolvable = (): [Promise<void>, ResolverFn] => {
+  const resolverRef: { current: null | ResolverFn } = { current: null }
+
+  const promise = new Promise<void>((resolve) => {
+    resolverRef.current = resolve
+  })
+
+  const resolver = () => {
+    if (!resolverRef.current) {
+      setTimeout(resolver, 1)
+    } else {
+      resolverRef.current()
+    }
+  }
+
+  return [promise, resolver]
 }
