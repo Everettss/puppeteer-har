@@ -77,31 +77,32 @@ export async function captureHar(
         return
       }
 
-      const response = params.response
-      const requestId = params.requestId
+      const { response, requestId } = params
 
       // Response body is unavailable for redirects, no-content, image, audio and video responses
       if (
-        response.status !== 204 &&
-        response.headers.location == null &&
-        captureMimeTypes.includes(response.mimeType)
+        response.status === 204 ||
+        response.headers.location != null ||
+        !captureMimeTypes.includes(response.mimeType)
       ) {
-        try {
-          const responseBody = await client.send("Network.getResponseBody", {
-            requestId,
-          })
+        return
+      }
 
-          // Set the response so `chrome-har` can add it to the HAR
-          params.response.body = Buffer.from(
-            responseBody.body,
-            responseBody.base64Encoded ? "base64" : undefined
-          ).toString()
-        } catch (e) {
-          // Resources (i.e. response bodies) are flushed after page commits
-          // navigation and we are no longer able to retrieve them. In this
-          // case, fail soft so we still add the rest of the response to the
-          // HAR. Possible option would be force wait before navigation...
-        }
+      try {
+        const responseBody = await client.send("Network.getResponseBody", {
+          requestId,
+        })
+
+        // Set the response so `chrome-har` can add it to the HAR
+        response.body = Buffer.from(
+          responseBody.body,
+          responseBody.base64Encoded ? "base64" : undefined
+        ).toString()
+      } catch (e) {
+        // Resources (i.e. response bodies) are flushed after page commits
+        // navigation and we are no longer able to retrieve them. In this
+        // case, fail soft so we still add the rest of the response to the
+        // HAR. Possible option would be force wait before navigation...
       }
     })
   })
