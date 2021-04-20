@@ -3,7 +3,7 @@ import { Page } from "puppeteer"
 import { Har } from "har-format"
 
 // event types to observe
-const page_observe = [
+const pageEventsToObserve = [
   "Page.loadEventFired",
   "Page.domContentEventFired",
   "Page.frameStartedLoading",
@@ -11,7 +11,7 @@ const page_observe = [
   "Page.frameScheduledNavigation",
 ]
 
-const network_observe = [
+const networkEventsToObserve = [
   "Network.requestWillBeSent",
   "Network.requestServedFromCache",
   "Network.dataReceived",
@@ -45,10 +45,8 @@ export async function captureNetwork(
     captureMimeTypes = ["text/html", "application/json"],
   }: CaptureOptions = {}
 ): Promise<StopFn> {
-  let inProgress = true
-
-  const page_events: PageEvent[] = []
-  const network_events: NetworkEvent[] = []
+  const pageEvents: PageEvent[] = []
+  const networkEvents: NetworkEvent[] = []
 
   const pendingRequests: Promise<void>[] = []
 
@@ -57,23 +55,19 @@ export async function captureNetwork(
   await client.send("Page.enable")
   await client.send("Network.enable")
 
-  page_observe.forEach((method) => {
-    client.on(method, (params) => {
-      if (!inProgress) {
-        return
-      }
+  const pageListeners = pageEventsToObserve.map((method) => {
+    const callback = (params: any) => {
+      pageEvents.push({ method, params })
+    }
 
-      page_events.push({ method, params })
-    })
+    client.on(method, callback)
+
+    return () => client.off(method, callback)
   })
 
-  network_observe.forEach((method) => {
-    client.on(method, async (params) => {
-      if (!inProgress) {
-        return
-      }
-
-      network_events.push({ method, params })
+  const networkListeners = networkEventsToObserve.map((method) => {
+    const callback = async (params: any) => {
+      networkEvents.push({ method, params })
 
       if (!saveResponses || method !== "Network.responseReceived") {
         return
@@ -112,16 +106,21 @@ export async function captureNetwork(
       } finally {
         resolve()
       }
-    })
+    }
+
+    client.on(method, callback)
+
+    return () => client.off(method, callback)
   })
 
   return async function getHar(): Promise<Har> {
-    inProgress = false
+    networkListeners.forEach((stopListening) => stopListening())
+    pageListeners.forEach((stopListening) => stopListening())
 
     await client.detach()
     await Promise.all(pendingRequests)
 
-    return harFromMessages(page_events.concat(network_events), {
+    return harFromMessages(pageEvents.concat(networkEvents), {
       includeTextFromResponseBody: saveResponses,
     })
   }
