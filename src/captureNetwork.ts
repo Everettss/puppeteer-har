@@ -1,8 +1,7 @@
 import { harFromMessages } from "chrome-har"
-import { Page } from "puppeteer"
+import { CDPSession, Page } from "puppeteer"
 import { Har } from "har-format"
 
-// event types to observe
 const pageEventsToObserve = [
   "Page.loadEventFired",
   "Page.domContentEventFired",
@@ -65,14 +64,18 @@ export async function captureNetwork(
     return () => client.off(method, callback)
   })
 
-  const networkListeners = networkEventsToObserve.map((method) => {
+  const networkObservers = networkEventsToObserve.map((method) => {
     const callback = async (params: any) => {
       networkEvents.push({ method, params })
+    }
 
-      if (!saveResponses || method !== "Network.responseReceived") {
-        return
-      }
+    client.on(method, callback)
 
+    return () => client.off(method, callback)
+  })
+
+  const captureResponses = (client: CDPSession) => {
+    const callback = async (params: any) => {
       const { response, requestId } = params
 
       // Response body is unavailable for redirects, no-content, image, audio and video responses
@@ -88,41 +91,65 @@ export async function captureNetwork(
 
       pendingRequests.push(pendingRequest)
 
-      try {
-        const responseBody = await client.send("Network.getResponseBody", {
-          requestId,
-        })
+      if (response.mimeType === "text/html") {
+        client.on("Network.loadingFinished", async (params) => {
+          if (params.requestId !== requestId) {
+            return
+          }
 
-        // Set the response so `chrome-har` can add it to the HAR
-        response.body = Buffer.from(
-          responseBody.body,
-          responseBody.base64Encoded ? "base64" : undefined
-        ).toString()
-      } catch (e) {
-        // Resources (i.e. response bodies) are flushed after page commits
-        // navigation and we are no longer able to retrieve them. In this
-        // case, fail soft so we still add the rest of the response to the
-        // HAR. Possible option would be force wait before navigation...
-      } finally {
+          response.body = await extractResponseContent(client, requestId)
+
+          resolve()
+        })
+      } else {
+        response.body = await extractResponseContent(client, requestId)
+
         resolve()
       }
     }
 
-    client.on(method, callback)
+    client.on("Network.responseReceived", callback)
 
-    return () => client.off(method, callback)
-  })
+    return () => client.off("Network.responseReceived", callback)
+  }
+
+  const networkListeners = saveResponses
+    ? [...networkObservers, captureResponses(client)]
+    : networkObservers
 
   return async function getHar(): Promise<Har> {
     networkListeners.forEach((stopListening) => stopListening())
     pageListeners.forEach((stopListening) => stopListening())
 
-    await client.detach()
     await Promise.all(pendingRequests)
+    await client.detach()
 
     return harFromMessages(pageEvents.concat(networkEvents), {
       includeTextFromResponseBody: saveResponses,
     })
+  }
+}
+
+const extractResponseContent = async (
+  client: CDPSession,
+  requestId: string
+) => {
+  try {
+    const responseBody = await client.send("Network.getResponseBody", {
+      requestId,
+    })
+
+    // Set the response so `chrome-har` can add it to the HAR
+    return Buffer.from(
+      responseBody.body,
+      responseBody.base64Encoded ? "base64" : undefined
+    ).toString()
+  } catch (e) {
+    console.log(e)
+    // Resources (i.e. response bodies) are flushed after page commits
+    // navigation and we are no longer able to retrieve them. In this
+    // case, fail soft so we still add the rest of the response to the
+    // HAR. Possible option would be force wait before navigation...
   }
 }
 
