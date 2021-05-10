@@ -13,17 +13,16 @@ yarn add @auteon/puppeteer-har
 ```es6
 import puppeteer from "puppeteer"
 import { captureNetwork } from "puppeteer-har"
-;(async () => {
-  const browser = await puppeteer.launch()
-  const page = await browser.newPage()
 
-  const getHar = await captureNetwork(page)
+const browser = await puppeteer.launch()
+const page = await browser.newPage()
 
-  await page.goto("http://example.com")
+const getHar = await captureNetwork(page)
 
-  const har = await getHar()
-  await browser.close()
-})()
+await page.goto("http://example.com")
+
+const har = await getHar()
+await browser.close()
 ```
 
 ## `captureNetwork(page[, options])`
