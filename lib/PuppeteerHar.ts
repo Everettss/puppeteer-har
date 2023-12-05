@@ -1,3 +1,4 @@
+import { Page } from 'puppeteer';
 import fs from 'fs/promises';
 import { harFromMessages } from 'chrome-har';
 
@@ -18,39 +19,37 @@ const network_observe = [
     'Network.resourceChangedPriority',
     'Network.loadingFinished',
     'Network.loadingFailed',
+    'Network.responseReceivedExtraInfo'
 ];
 
 class PuppeteerHar {
+    private page: Page;
+    private inProgress: boolean;
+    private networkEvents: any[];
+    private pageEvents: any[];
+    private responseBodyPromises: any[];
 
-    /**
-     * @param {object} page
-     */
-    constructor(page) {
+    constructor(page: Page) {
         this.page = page;
-        this.mainFrame = this.page.mainFrame();
         this.inProgress = false; 
+        this.networkEvents = [];
+        this.pageEvents = [];
+        this.responseBodyPromises = [];
         this.cleanUp();
     }
 
-    /**
-     * @returns {void}
-     */
-    cleanUp() {
-        this.network_events = [];
-        this.page_events = [];
-        this.response_body_promises = [];
+    cleanUp(): void {
+        this.networkEvents = [];
+        this.pageEvents = [];
+        this.responseBodyPromises = [];
     }
 
-    /**
-     * @param {{path: string}=} options
-     * @return {Promise<void>}
-     */
-    async start({ path, saveResponse, captureMimeTypes } = {}) {
+    async start({ path, saveResponse, captureMimeTypes } = {}): Promise<void> {
         this.inProgress = true;
         this.saveResponse = saveResponse || false;
         this.captureMimeTypes = captureMimeTypes || ['text/html', 'application/json'];
         this.path = path;
-        this.client = await this.page.target().createCDPSession();
+        const this.client = await this.page.target().createCDPSession();
         await this.client.send('Page.enable');
         await this.client.send('Network.enable');
         page_observe.forEach(method => {
@@ -58,7 +57,7 @@ class PuppeteerHar {
                 if (!this.inProgress) {
                     return;
                 }
-                this.page_events.push({ method, params });
+                this.pageEvents.push({ method, params });
             });
         });
         network_observe.forEach(method => {
@@ -66,9 +65,9 @@ class PuppeteerHar {
                 if (!this.inProgress) {
                     return;
                 }
-                this.network_events.push({ method, params });
+                this.networkEvents.push({ method, params });
 
-                if (this.saveResponse && method == 'Network.responseReceived') {
+                if (saveResponse && method == 'Network.responseReceived') {
                     const response = params.response;
                     const requestId = params.requestId;
                     
@@ -91,22 +90,19 @@ class PuppeteerHar {
                             // case, fail soft so we still add the rest of the response to the
                             // HAR. Possible option would be force wait before navigation...
                         });
-                        this.response_body_promises.push(promise);
+                        this.responseBodyPromises.push(promise);
                     }
                 }
             });
         });
     }
 
-    /**
-     * @returns {Promise<void|object>}
-     */
-    async stop() {
+    async stop(): Promise<void> {
         this.inProgress = false; 
-        await Promise.all(this.response_body_promises);
+        await Promise.all(this.responseBodyPromises);
         await this.client.detach();
         const har = harFromMessages(
-            this.page_events.concat(this.network_events),
+            this.pageEvents.concat(this.networkEvents),
             {includeTextFromResponseBody: this.saveResponse}
         );
         this.cleanUp();
