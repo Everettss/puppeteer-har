@@ -1,6 +1,6 @@
 {
-  "name": "puppeteer-har",
-  "version": "1.1.2",
+  "name": "pptr-har",
+  "version": "1.0",
   "description": "generate a har (http archive format) file with puppeteer",
   "main": "index.js",
   "directories": {
@@ -19,7 +19,7 @@
   "author": "ezra mizrahi",
   "license": "MIT",
   "dependencies": {
-    "chrome-har": "^0.11.3"
+    "chrome-har": "^0.11.12"
   },
   "peerDependencies": {
     "puppeteer": ">=1.0.0"

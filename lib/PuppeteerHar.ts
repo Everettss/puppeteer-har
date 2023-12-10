@@ -1,9 +1,8 @@
-import { Page } from 'puppeteer';
+import { Page, CDPSession } from 'puppeteer';
 import fs from 'fs/promises';
 import { harFromMessages } from 'chrome-har';
 
-// event types to observe
-const page_observe = [
+const pageObserve: string[] = [
     'Page.loadEventFired',
     'Page.domContentEventFired',
     'Page.frameStartedLoading',
@@ -11,7 +10,7 @@ const page_observe = [
     'Page.frameScheduledNavigation',
 ];
 
-const network_observe = [
+const networkObserve: string[] = [
     'Network.requestWillBeSent',
     'Network.requestServedFromCache',
     'Network.dataReceived',
@@ -22,9 +21,19 @@ const network_observe = [
     'Network.responseReceivedExtraInfo'
 ];
 
+interface HarOptions {
+    path?: string;
+    saveResponse?: boolean;
+    captureMimeTypes?: string[];
+};
+
 class PuppeteerHar {
     private page: Page;
     private inProgress: boolean;
+    private path?: string;
+    private saveResponse!: boolean;
+    private captureMimeTypes!: string[];
+    private client!: CDPSession;
     private networkEvents: any[];
     private pageEvents: any[];
     private responseBodyPromises: any[];
@@ -44,60 +53,58 @@ class PuppeteerHar {
         this.responseBodyPromises = [];
     }
 
-    async start({ path, saveResponse, captureMimeTypes } = {}): Promise<void> {
+    public async start(options: HarOptions = {}): Promise<void> {
+        const { path, saveResponse = false, captureMimeTypes = ['text/html', 'application/json'] } = options;
         this.inProgress = true;
-        this.saveResponse = saveResponse || false;
-        this.captureMimeTypes = captureMimeTypes || ['text/html', 'application/json'];
+        this.saveResponse = saveResponse;
+        this.captureMimeTypes = captureMimeTypes;
         this.path = path;
-        const this.client = await this.page.target().createCDPSession();
+        this.client = await this.page.target().createCDPSession();
         await this.client.send('Page.enable');
         await this.client.send('Network.enable');
-        page_observe.forEach(method => {
-            this.client.on(method, params => {
+        pageObserve.forEach(method => {
+            this.client.on(method, (params: any) => {
                 if (!this.inProgress) {
                     return;
                 }
                 this.pageEvents.push({ method, params });
             });
         });
-        network_observe.forEach(method => {
-            this.client.on(method, params => {
+        networkObserve.forEach(method => {
+            this.client.on(method, (params: any) => {
                 if (!this.inProgress) {
                     return;
                 }
                 this.networkEvents.push({ method, params });
 
                 if (saveResponse && method == 'Network.responseReceived') {
-                    const response = params.response;
-                    const requestId = params.requestId;
+                    const response = params.response as any;
+                    const requestId = params.requestId as string;
                     
                     // Response body is unavailable for redirects, no-content, image, audio and video responses
                     if (response.status !== 204 &&
                         response.headers.location == null &&
                         this.captureMimeTypes.includes(response.mimeType)
                     ) {
-                        const promise = this.client.send(
-                            'Network.getResponseBody', { requestId },
-                        ).then((responseBody) => {
-                            // Set the response so `chrome-har` can add it to the HAR
-                            params.response.body = new Buffer.from(
-                                responseBody.body,
-                                responseBody.base64Encoded ? 'base64' : undefined,
-                            ).toString();
-                        }, (reason) => {
-                            // Resources (i.e. response bodies) are flushed after page commits
-                            // navigation and we are no longer able to retrieve them. In this
-                            // case, fail soft so we still add the rest of the response to the
-                            // HAR. Possible option would be force wait before navigation...
-                        });
-                        this.responseBodyPromises.push(promise);
+                        const handleResponseBody = async () => {
+                            try {
+                                const responseBody = await this.client.send('Network.getResponseBody', { requestId });
+                                params.response.body = Buffer.from(
+                                    responseBody.body,
+                                    responseBody.base64Encoded ? 'base64' : undefined,
+                                ).toString();
+                            } catch (reason) {
+                                console.log(`Reason: ${reason}`)
+                            }
+                        }
+                        this.responseBodyPromises.push(handleResponseBody());
                     }
                 }
             });
         });
     }
 
-    async stop(): Promise<void> {
+    public async stop(): Promise<void> {
         this.inProgress = false; 
         await Promise.all(this.responseBodyPromises);
         await this.client.detach();
