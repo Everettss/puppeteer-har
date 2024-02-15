@@ -35,6 +35,7 @@ const PuppeteerHar = require('puppeteer-har');
 ### har.start([options])
 - `options` <?[Object]> Optional
   - `path` <[string]> If set HAR file will be written at this path
+  - `includeResponseBody` <[boolean]> Function that evaluates the Puppeteer `Response` and returns `true` if its body should also be added (as a <[string]>)
 - returns: <[Promise]>
 
 ### har.stop()
